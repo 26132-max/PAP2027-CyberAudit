@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CyberAudit</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="topbar">
+            <h1>CyberAudit</h1>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout-btn">Sair</button>
+            </form>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/dashboard}" class="nav-link active">Dashboard</a>
+            <a th:href="@{/organizations}" class="nav-link">Organizações</a>
+        </nav>
+
+        <main class="content">
+            <section class="card highlight">
+                <p class="eyebrow">Painel principal</p>
+                <h2>Bem-vindo ao CyberAudit</h2>
+                <p>Esta é a base inicial da plataforma de auditoria e gestão de cibersegurança.</p>
+            </section>
+
+            <section class="stats-grid">
+                <div class="card stat-card">
+                    <span class="label">Organizações</span>
+                    <strong>3</strong>
+                </div>
+                <div class="card stat-card">
+                    <span class="label">Auditorias</span>
+                    <strong>0</strong>
+                </div>
+                <div class="card stat-card">
+                    <span class="label">Vulnerabilidades</span>
+                    <strong>0</strong>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Próximos passos</h3>
+                <ul>
+                    <li>Criar autenticação de utilizadores por organização.</li>
+                    <li>Adicionar gestão de ativos e projetos.</li>
+                    <li>Implementar módulos de auditoria SAST/DAST.</li>
+                    <li>Gerar relatórios de risco e vulnerabilidades.</li>
+                </ul>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

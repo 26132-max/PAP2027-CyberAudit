@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle} + ' | CyberAudit'">CyberAudit</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="topbar">
+            <h1>CyberAudit</h1>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout-btn">Sair</button>
+            </form>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/dashboard}" class="nav-link">Dashboard</a>
+            <a th:href="@{/organizations}" class="nav-link active">Organizações</a>
+        </nav>
+
+        <main class="content">
+            <section class="card">
+                <div class="section-header">
+                    <h2>Organizações registadas</h2>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Setor</th>
+                        <th>Estado</th>
+                        <th>Data de criação</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="organization : ${organizations}">
+                        <td th:text="${organization.name}">Nome</td>
+                        <td th:text="${organization.sector}">Setor</td>
+                        <td><span class="badge" th:text="${organization.status}">Ativa</span></td>
+                        <td th:text="${#temporals.format(organization.createdAt, 'dd/MM/yyyy')}">01/01/2026</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
