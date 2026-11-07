@@ -21,8 +21,11 @@ O objetivo é centralizar ativos, auditorias, vulnerabilidades e riscos, acompan
 
 ### 1. Organizações e utilizadores
 - Gestão de organizações e respetivos utilizadores.
-- Autenticação e permissões locais.
-- Separação dos dados por organização.
+- Associação de cada utilizador a uma organização.
+- Funções disponíveis: `ADMIN`, `ANALISTA` e `LEITOR`.
+- Palavras-passe guardadas com hash bcrypt, nunca em texto simples.
+- Eliminação de utilizadores e listagem dos registos.
+- A autenticação e aplicação efetiva das permissões ainda serão implementadas numa etapa posterior.
 
 ### 2. Ativos
 - Registo de aplicações, APIs, projetos e sistemas.
@@ -53,6 +56,7 @@ O objetivo é centralizar ativos, auditorias, vulnerabilidades e riscos, acompan
 | Maven | Gestão do projeto e dependências |
 | SQLite | Base de dados local da aplicação |
 | JDBC | Acesso à base de dados |
+| jBCrypt | Hash de palavras-passe |
 | JUnit 5 | Testes |
 | Git e GitHub | Controlo de versões |
 
@@ -72,7 +76,7 @@ O CyberAudit é uma aplicação desktop modular. A interface gráfica é constru
 
 ## Estado atual
 
-A primeira versão inclui uma janela JavaFX para consultar, adicionar e eliminar organizações. Os dados são persistidos localmente em `data/cyberaudit.db`. Os restantes módulos descritos neste README são objetivos a implementar progressivamente.
+A aplicação inclui gestão local de organizações e utilizadores: é possível criar e eliminar registos, associar utilizadores a organizações e definir funções. As palavras-passe são armazenadas com hash bcrypt. Os dados ficam em `data/cyberaudit.db`. A autenticação real e o controlo das permissões ainda não estão implementados; as restantes funcionalidades descritas são objetivos futuros.
 
 ## Executar em desenvolvimento
 
@@ -87,8 +91,8 @@ Na primeira execução, a aplicação cria automaticamente a pasta `data` e a ba
 ## Plano de desenvolvimento
 
 1. Preparar o ambiente e a estrutura da aplicação desktop.
-2. Implementar a gestão de organizações.
-3. Criar gestão de utilizadores, autenticação e permissões.
+2. Implementar a gestão de organizações e utilizadores.
+3. Criar autenticação e aplicação de permissões.
 4. Implementar gestão de ativos.
 5. Criar os módulos de auditoria e histórico.
 6. Integrar progressivamente análises SAST, DAST e de dependências.

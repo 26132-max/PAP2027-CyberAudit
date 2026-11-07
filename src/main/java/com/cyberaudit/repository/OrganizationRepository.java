@@ -71,6 +71,10 @@ public class OrganizationRepository {
     }
 
     private Connection openConnection() throws SQLException {
-        return DriverManager.getConnection(DATABASE_URL);
+        Connection connection = DriverManager.getConnection(DATABASE_URL);
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys = ON");
+        }
+        return connection;
     }
 }
