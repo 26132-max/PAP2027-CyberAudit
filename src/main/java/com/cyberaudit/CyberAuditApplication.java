@@ -19,7 +19,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -27,6 +26,7 @@ import javafx.stage.Stage;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 public class CyberAuditApplication extends Application {
 
@@ -34,35 +34,166 @@ public class CyberAuditApplication extends Application {
     private final UserRepository userRepository = new UserRepository();
     private final ObservableList<Organization> organizations = FXCollections.observableArrayList();
     private final ObservableList<UserAccount> users = FXCollections.observableArrayList();
+    private Stage stage;
+    private UserAccount currentUser;
     private TableView<Organization> organizationTable;
     private TableView<UserAccount> userTable;
+    private ComboBox<Organization> userOrganizationField;
 
     @Override
-    public void start(Stage stage) {
-        Label title = new Label("CyberAudit");
-        title.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #a78bfa;");
-        Label subtitle = new Label("Gestão local de organizações e utilizadores");
-        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #94a3b8;");
+    public void start(Stage primaryStage) {
+        stage = primaryStage;
+        stage.setTitle("CyberAudit");
+        stage.setMinWidth(820);
+        stage.setMinHeight(560);
+        showLoginOrFirstRun();
+        stage.show();
+    }
+
+    private void showLoginOrFirstRun() {
+        try {
+            if (userRepository.count() == 0) {
+                showFirstRunSetup();
+            } else {
+                showLogin();
+            }
+        } catch (SQLException exception) {
+            showMessage(Alert.AlertType.ERROR, "Não foi possível verificar os utilizadores guardados.");
+        }
+    }
+
+    private void showLogin() {
+        Label title = heading("Iniciar sessão");
+        Label subtitle = new Label("Entra na tua conta CyberAudit.");
+        TextField email = new TextField();
+        email.setPromptText("Email");
+        PasswordField password = new PasswordField();
+        password.setPromptText("Palavra-passe");
+        Label error = new Label();
+        error.setStyle("-fx-text-fill: #f87171;");
+        Button loginButton = new Button("Entrar");
+        loginButton.setDefaultButton(true);
+        loginButton.setOnAction(event -> {
+            if (email.getText().isBlank() || password.getText().isBlank()) {
+                error.setText("Introduz o email e a palavra-passe.");
+                return;
+            }
+            try {
+                Optional<UserAccount> account = userRepository.authenticate(email.getText(), password.getText());
+                if (account.isEmpty()) {
+                    error.setText("Email ou palavra-passe incorretos.");
+                    password.clear();
+                    return;
+                }
+                currentUser = account.get();
+                showMainScreen();
+            } catch (SQLException exception) {
+                error.setText("Não foi possível iniciar sessão. Tenta novamente.");
+            }
+        });
+
+        VBox card = new VBox(14, title, subtitle, email, password, error, loginButton);
+        card.setPadding(new Insets(28));
+        card.setMaxWidth(420);
+        card.setStyle("-fx-background-color: #111827; -fx-background-radius: 12px;");
+        VBox root = new VBox(card);
+        root.setPadding(new Insets(30));
+        root.setStyle("-fx-background-color: #0f172a;");
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        stage.setScene(new Scene(root, 900, 600));
+    }
+
+    private void showFirstRunSetup() {
+        Label title = heading("Configuração inicial");
+        Label subtitle = new Label("Cria a organização e a conta de administrador para começar.");
+        TextField organizationName = new TextField();
+        organizationName.setPromptText("Nome da organização");
+        TextField sector = new TextField();
+        sector.setPromptText("Setor da organização");
+        TextField fullName = new TextField();
+        fullName.setPromptText("Nome do administrador");
+        TextField email = new TextField();
+        email.setPromptText("Email do administrador");
+        PasswordField password = new PasswordField();
+        password.setPromptText("Palavra-passe (mínimo 12 caracteres)");
+        PasswordField confirmPassword = new PasswordField();
+        confirmPassword.setPromptText("Confirmar palavra-passe");
+        Label error = new Label();
+        error.setStyle("-fx-text-fill: #f87171;");
+        Button createButton = new Button("Criar conta de administrador");
+        createButton.setDefaultButton(true);
+        createButton.setOnAction(event -> {
+            String orgName = organizationName.getText().trim();
+            String orgSector = sector.getText().trim();
+            String nameValue = fullName.getText().trim();
+            String emailValue = email.getText().trim();
+            if (orgName.isEmpty() || orgSector.isEmpty() || nameValue.isEmpty() || emailValue.isEmpty()
+                    || password.getText().isEmpty()) {
+                error.setText("Preenche todos os campos.");
+                return;
+            }
+            if (!isValidEmail(emailValue)) {
+                error.setText("Introduz um endereço de email válido.");
+                return;
+            }
+            if (password.getText().length() < 12) {
+                error.setText("A palavra-passe deve ter pelo menos 12 caracteres.");
+                return;
+            }
+            if (!password.getText().equals(confirmPassword.getText())) {
+                error.setText("As palavras-passe não coincidem.");
+                return;
+            }
+            try {
+                organizationRepository.save(new Organization(null, orgName, orgSector, "Ativa", ""));
+                Organization organization = organizationRepository.findAll().stream()
+                        .filter(item -> item.name().equalsIgnoreCase(orgName))
+                        .findFirst().orElseThrow();
+                userRepository.save(nameValue, emailValue, password.getText(), "ADMIN", organization.id());
+                currentUser = userRepository.authenticate(emailValue, password.getText()).orElseThrow();
+                showMainScreen();
+            } catch (SQLException exception) {
+                error.setText("Não foi possível concluir a configuração. Verifica se o email já está registado.");
+            }
+        });
+
+        VBox card = new VBox(12, title, subtitle, organizationName, sector, fullName, email,
+                password, confirmPassword, error, createButton);
+        card.setPadding(new Insets(28));
+        card.setMaxWidth(480);
+        card.setStyle("-fx-background-color: #111827; -fx-background-radius: 12px;");
+        VBox root = new VBox(card);
+        root.setPadding(new Insets(30));
+        root.setStyle("-fx-background-color: #0f172a;");
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        stage.setScene(new Scene(root, 900, 700));
+    }
+
+    private void showMainScreen() {
+        refreshOrganizations();
+        refreshUsers();
+
+        Label title = heading("CyberAudit");
+        Label subtitle = new Label("Sessão iniciada como " + currentUser.fullName() + " — " + currentUser.role());
+        subtitle.setStyle("-fx-text-fill: #94a3b8;");
+        Button logoutButton = new Button("Terminar sessão");
+        logoutButton.setOnAction(event -> {
+            currentUser = null;
+            showLoginOrFirstRun();
+        });
+        HBox top = new HBox(12, new VBox(4, title, subtitle), logoutButton);
+        top.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        HBox.setHgrow(top.getChildren().get(0), Priority.ALWAYS);
 
         TabPane tabs = new TabPane(createOrganizationsTab(), createUsersTab());
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         Label note = new Label("Os dados são guardados localmente em data/cyberaudit.db.");
         note.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 12px;");
-
-        VBox content = new VBox(16, new VBox(4, title, subtitle), tabs, note);
+        VBox content = new VBox(16, top, tabs, note);
         content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color: #0f172a;");
         VBox.setVgrow(tabs, Priority.ALWAYS);
-
-        Scene scene = new Scene(content, 1000, 680);
-        stage.setTitle("CyberAudit — Aplicação de Auditoria de Cibersegurança");
-        stage.setMinWidth(820);
-        stage.setMinHeight(560);
-        stage.setScene(scene);
-        stage.show();
-
-        refreshOrganizations();
-        refreshUsers();
+        stage.setScene(new Scene(content, 1000, 680));
     }
 
     private Tab createOrganizationsTab() {
@@ -92,6 +223,12 @@ public class CyberAuditApplication extends Application {
         addButton.setOnAction(event -> addOrganization(nameField, sectorField, statusField));
         Button deleteButton = new Button("Eliminar selecionada");
         deleteButton.setOnAction(event -> deleteSelectedOrganization());
+        boolean admin = isAdmin();
+        nameField.setDisable(!admin);
+        sectorField.setDisable(!admin);
+        statusField.setDisable(!admin);
+        addButton.setDisable(!admin);
+        deleteButton.setDisable(!admin);
 
         HBox form = new HBox(10, nameField, sectorField, statusField, addButton);
         HBox.setHgrow(nameField, Priority.ALWAYS);
@@ -126,18 +263,38 @@ public class CyberAuditApplication extends Application {
         TextField emailField = new TextField();
         emailField.setPromptText("Email");
         PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Palavra-passe (mínimo 8 caracteres)");
+        passwordField.setPromptText("Palavra-passe (mínimo 12 caracteres)");
         ComboBox<String> roleField = new ComboBox<>();
         roleField.getItems().addAll("ADMIN", "ANALISTA", "LEITOR");
         roleField.setValue("ANALISTA");
-        ComboBox<String> organizationField = new ComboBox<>();
-        organizationField.setPromptText("Organização");
+        userOrganizationField = new ComboBox<>();
+        userOrganizationField.setItems(organizations);
+        userOrganizationField.setPromptText("Organização");
+        userOrganizationField.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(Organization organization) {
+                return organization == null ? "" : organization.name();
+            }
+
+            @Override
+            public Organization fromString(String value) {
+                return organizations.stream().filter(item -> item.name().equals(value)).findFirst().orElse(null);
+            }
+        });
         Button addButton = new Button("Criar utilizador");
-        addButton.setOnAction(event -> addUser(fullNameField, emailField, passwordField, roleField, organizationField));
+        addButton.setOnAction(event -> addUser(fullNameField, emailField, passwordField, roleField, userOrganizationField));
         Button deleteButton = new Button("Eliminar selecionado");
         deleteButton.setOnAction(event -> deleteSelectedUser());
+        boolean admin = isAdmin();
+        fullNameField.setDisable(!admin);
+        emailField.setDisable(!admin);
+        passwordField.setDisable(!admin);
+        roleField.setDisable(!admin);
+        userOrganizationField.setDisable(!admin);
+        addButton.setDisable(!admin);
+        deleteButton.setDisable(!admin);
 
-        HBox form = new HBox(10, fullNameField, emailField, passwordField, roleField, organizationField, addButton);
+        HBox form = new HBox(10, fullNameField, emailField, passwordField, roleField, userOrganizationField, addButton);
         HBox.setHgrow(fullNameField, Priority.ALWAYS);
         HBox.setHgrow(emailField, Priority.ALWAYS);
         VBox box = new VBox(14, form, userTable, deleteButton);
@@ -159,33 +316,26 @@ public class CyberAuditApplication extends Application {
             sector.clear();
             refreshOrganizations();
         } catch (SQLException exception) {
-            showMessage(Alert.AlertType.ERROR, "Não foi possível guardar a organização: " + exception.getMessage());
+            showMessage(Alert.AlertType.ERROR, "Não foi possível guardar a organização.");
         }
     }
 
     private void addUser(TextField fullName, TextField email, PasswordField password,
-                         ComboBox<String> role, ComboBox<String> organization) {
+                         ComboBox<String> role, ComboBox<Organization> organization) {
         String nameValue = fullName.getText().trim();
         String emailValue = email.getText().trim();
         String passwordValue = password.getText();
-        String organizationName = organization.getValue();
-        if (nameValue.isEmpty() || emailValue.isEmpty() || passwordValue.isEmpty() || organizationName == null) {
+        Organization selectedOrganization = organization.getValue();
+        if (nameValue.isEmpty() || emailValue.isEmpty() || passwordValue.isEmpty() || selectedOrganization == null) {
             showMessage(Alert.AlertType.WARNING, "Preenche todos os campos e escolhe uma organização.");
             return;
         }
-        if (!emailValue.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+        if (!isValidEmail(emailValue)) {
             showMessage(Alert.AlertType.WARNING, "Introduz um endereço de email válido.");
             return;
         }
-        if (passwordValue.length() < 8) {
-            showMessage(Alert.AlertType.WARNING, "A palavra-passe deve ter pelo menos 8 caracteres.");
-            return;
-        }
-        Organization selectedOrganization = organizations.stream()
-                .filter(item -> item.name().equals(organizationName))
-                .findFirst().orElse(null);
-        if (selectedOrganization == null) {
-            showMessage(Alert.AlertType.WARNING, "A organização selecionada já não existe. Atualiza a lista.");
+        if (passwordValue.length() < 12) {
+            showMessage(Alert.AlertType.WARNING, "A palavra-passe deve ter pelo menos 12 caracteres.");
             return;
         }
         try {
@@ -195,12 +345,12 @@ public class CyberAuditApplication extends Application {
             password.clear();
             role.setValue("ANALISTA");
             refreshUsers();
-            showMessage(Alert.AlertType.INFORMATION, "Utilizador criado. A palavra-passe foi guardada de forma segura.");
+            showMessage(Alert.AlertType.INFORMATION, "Utilizador criado com sucesso.");
         } catch (SQLException exception) {
             if (exception.getMessage() != null && exception.getMessage().toLowerCase().contains("unique")) {
                 showMessage(Alert.AlertType.WARNING, "Já existe um utilizador com esse email.");
             } else {
-                showMessage(Alert.AlertType.ERROR, "Não foi possível criar o utilizador: " + exception.getMessage());
+                showMessage(Alert.AlertType.ERROR, "Não foi possível criar o utilizador.");
             }
         }
     }
@@ -211,12 +361,20 @@ public class CyberAuditApplication extends Application {
             showMessage(Alert.AlertType.INFORMATION, "Seleciona uma organização primeiro.");
             return;
         }
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION,
+                "Eliminar esta organização também elimina os utilizadores associados. Continuar?");
+        confirmation.setHeaderText(null);
+        confirmation.setTitle("Confirmar eliminação");
+        if (confirmation.showAndWait().orElse(javafx.scene.control.ButtonType.CANCEL)
+                != javafx.scene.control.ButtonType.OK) {
+            return;
+        }
         try {
             organizationRepository.deleteById(selected.id());
             refreshOrganizations();
             refreshUsers();
         } catch (SQLException exception) {
-            showMessage(Alert.AlertType.ERROR, "Não foi possível eliminar a organização: " + exception.getMessage());
+            showMessage(Alert.AlertType.ERROR, "Não foi possível eliminar a organização.");
         }
     }
 
@@ -226,26 +384,23 @@ public class CyberAuditApplication extends Application {
             showMessage(Alert.AlertType.INFORMATION, "Seleciona um utilizador primeiro.");
             return;
         }
+        if (selected.id().equals(currentUser.id())) {
+            showMessage(Alert.AlertType.WARNING, "Não podes eliminar a conta que está atualmente em sessão.");
+            return;
+        }
         try {
             userRepository.deleteById(selected.id());
             refreshUsers();
         } catch (SQLException exception) {
-            showMessage(Alert.AlertType.ERROR, "Não foi possível eliminar o utilizador: " + exception.getMessage());
+            showMessage(Alert.AlertType.ERROR, "Não foi possível eliminar o utilizador.");
         }
     }
 
     private void refreshOrganizations() {
         try {
             organizations.setAll(organizationRepository.findAll());
-            if (userTable != null) {
-                @SuppressWarnings("unchecked")
-                ComboBox<String> organizationField = (ComboBox<String>) userTable.getProperties().get("organizationField");
-                if (organizationField != null) {
-                    organizationField.getItems().setAll(organizations.stream().map(Organization::name).toList());
-                }
-            }
         } catch (SQLException exception) {
-            showMessage(Alert.AlertType.ERROR, "Não foi possível carregar as organizações: " + exception.getMessage());
+            showMessage(Alert.AlertType.ERROR, "Não foi possível carregar as organizações.");
         }
     }
 
@@ -253,8 +408,22 @@ public class CyberAuditApplication extends Application {
         try {
             users.setAll(userRepository.findAll());
         } catch (SQLException exception) {
-            showMessage(Alert.AlertType.ERROR, "Não foi possível carregar os utilizadores: " + exception.getMessage());
+            showMessage(Alert.AlertType.ERROR, "Não foi possível carregar os utilizadores.");
         }
+    }
+
+    private boolean isAdmin() {
+        return currentUser != null && "ADMIN".equals(currentUser.role());
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    }
+
+    private Label heading(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #a78bfa;");
+        return label;
     }
 
     private void showMessage(Alert.AlertType type, String message) {

@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class UserRepository {
 
@@ -35,6 +36,14 @@ public class UserRepository {
         }
     }
 
+    public long count() throws SQLException {
+        try (Connection connection = openConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM users")) {
+            return resultSet.next() ? resultSet.getLong(1) : 0;
+        }
+    }
+
     public List<UserAccount> findAll() throws SQLException {
         List<UserAccount> users = new ArrayList<>();
         String sql = """
@@ -48,17 +57,33 @@ public class UserRepository {
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
-                users.add(new UserAccount(
-                        resultSet.getLong("id"),
-                        resultSet.getString("full_name"),
-                        resultSet.getString("email"),
-                        resultSet.getString("role"),
-                        resultSet.getLong("organization_id"),
-                        resultSet.getString("organization_name"),
-                        resultSet.getString("created_at")));
+                users.add(mapUser(resultSet));
             }
         }
         return users;
+    }
+
+    public Optional<UserAccount> authenticate(String email, String password) throws SQLException {
+        String sql = """
+                SELECT u.id, u.full_name, u.email, u.password_hash, u.role, u.organization_id,
+                       o.name AS organization_name, u.created_at
+                FROM users u
+                JOIN organizations o ON o.id = u.organization_id
+                WHERE u.email = ? COLLATE NOCASE
+                """;
+        try (Connection connection = openConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email.trim());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return Optional.empty();
+                }
+                String passwordHash = resultSet.getString("password_hash");
+                if (!BCrypt.checkpw(password, passwordHash)) {
+                    return Optional.empty();
+                }
+                return Optional.of(mapUser(resultSet));
+            }
+        }
     }
 
     public void save(String fullName, String email, String password, String role, long organizationId)
@@ -69,8 +94,8 @@ public class UserRepository {
                 """;
         String passwordHash = BCrypt.hashpw(password, BCrypt.gensalt(12));
         try (Connection connection = openConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, fullName);
-            statement.setString(2, email);
+            statement.setString(1, fullName.trim());
+            statement.setString(2, email.trim());
             statement.setString(3, passwordHash);
             statement.setString(4, role);
             statement.setLong(5, organizationId);
@@ -84,6 +109,17 @@ public class UserRepository {
             statement.setLong(1, id);
             statement.executeUpdate();
         }
+    }
+
+    private UserAccount mapUser(ResultSet resultSet) throws SQLException {
+        return new UserAccount(
+                resultSet.getLong("id"),
+                resultSet.getString("full_name"),
+                resultSet.getString("email"),
+                resultSet.getString("role"),
+                resultSet.getLong("organization_id"),
+                resultSet.getString("organization_name"),
+                resultSet.getString("created_at"));
     }
 
     private Connection openConnection() throws SQLException {
