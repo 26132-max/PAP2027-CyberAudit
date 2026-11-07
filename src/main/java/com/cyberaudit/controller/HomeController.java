@@ -1,15 +1,7 @@
 package com.cyberaudit.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-
-@Controller
-public class HomeController {
-
-    @GetMapping({"/", "/dashboard"})
-    public String dashboard(Model model) {
-        model.addAttribute("pageTitle", "Dashboard");
-        return "index";
+/** Desktop navigation is currently handled by the JavaFX application. */
+public final class HomeController {
+    private HomeController() {
     }
 }

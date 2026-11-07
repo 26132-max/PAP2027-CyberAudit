@@ -1,147 +1,103 @@
-
 # CyberAudit
 
-**Plataforma de Auditoria e Gestão de Cibersegurança para Empresas Tecnológicas**
+**Aplicação desktop de auditoria e gestão de cibersegurança para empresas tecnológicas**
 
 ## Sobre o projeto
 
-O **CyberAudit** é um projeto de desenvolvimento de uma plataforma de cibersegurança destinada a empresas de IT e tecnologia.
+O **CyberAudit** é uma aplicação desktop para Windows, macOS e Linux, desenvolvida para apoiar empresas de IT e tecnologia na gestão de auditorias de segurança. É um programa instalado e executado no computador, com janela própria — não é um site nem uma aplicação web.
 
-O seu principal objetivo é ajudar as organizações a identificar vulnerabilidades, avaliar riscos, acompanhar correções e melhorar continuamente a segurança das suas aplicações e sistemas.
-
-A plataforma pretende centralizar diferentes tipos de auditoria de segurança, disponibilizando uma visão organizada dos problemas encontrados e do seu estado de resolução.
-
-Este projeto está a ser desenvolvido no âmbito da **Prova de Aptidão Profissional (PAP) de 2027**.
+O objetivo é centralizar ativos, auditorias, vulnerabilidades e riscos, acompanhar correções e apoiar a melhoria contínua da segurança de aplicações e sistemas. O projeto está a ser desenvolvido no âmbito da **Prova de Aptidão Profissional (PAP) de 2027**.
 
 ## Objetivos
 
-- Identificar vulnerabilidades em aplicações e projetos de software.
-- Realizar análises estáticas ao código-fonte (SAST).
-- Realizar análises dinâmicas a aplicações em execução (DAST).
-- Identificar vulnerabilidades em dependências de software.
-- Classificar vulnerabilidades de acordo com a sua gravidade.
-- Avaliar e acompanhar riscos de segurança.
-- Gerir auditorias e respetivos resultados.
-- Comparar resultados de auditorias anteriores e posteriores às correções.
-- Gerar relatórios técnicos de segurança.
+- Registar organizações, utilizadores e ativos de tecnologia.
+- Organizar auditorias SAST, DAST e de dependências.
+- Registar e classificar vulnerabilidades, incluindo CWE e CVSS.
+- Acompanhar correções, riscos e resultados ao longo do tempo.
+- Comparar auditorias e preparar relatórios técnicos.
+- Guardar os dados localmente, com possibilidade de evolução futura para uma base de dados partilhada.
 
 ## Funcionalidades previstas
 
-### 1. Gestão de organizações e utilizadores
-- Registo e gestão de organizações.
-- Autenticação de utilizadores.
-- Gestão de permissões e funções.
-- Separação dos dados entre organizações.
+### 1. Organizações e utilizadores
+- Gestão de organizações e respetivos utilizadores.
+- Autenticação e permissões locais.
+- Separação dos dados por organização.
 
-### 2. Gestão de ativos
-- Registo de aplicações web.
-- Registo de APIs.
-- Gestão de projetos de software.
+### 2. Ativos
+- Registo de aplicações, APIs, projetos e sistemas.
 - Consulta dos ativos associados a cada organização.
 
-### 3. Auditorias de segurança
-- Criação e gestão de auditorias.
+### 3. Auditorias
+- Criação e histórico de auditorias.
 - Análise estática de código (SAST).
-- Análise dinâmica de aplicações (DAST).
+- Análise dinâmica de aplicações (DAST), apenas com autorização explícita.
 - Análise de dependências.
-- Histórico de auditorias.
 
-### 4. Gestão de vulnerabilidades
-- Registo de vulnerabilidades identificadas.
-- Classificação por gravidade.
-- Associação a identificadores CWE.
-- Recomendações de correção.
-- Acompanhamento do estado de resolução.
+### 4. Vulnerabilidades e riscos
+- Registo de vulnerabilidades e classificação de gravidade.
+- Associação a identificadores CWE e avaliação CVSS.
+- Recomendações e acompanhamento do estado de resolução.
+- Priorização com base no impacto para a organização.
 
-### 5. Gestão de riscos
-- Avaliação da gravidade técnica.
-- Consideração do impacto para a organização.
-- Priorização das vulnerabilidades.
-- Acompanhamento da evolução do risco.
+### 5. Relatórios
+- Indicadores de segurança e relatórios técnicos.
+- Comparação entre auditorias e acompanhamento de correções.
 
-### 6. Relatórios e comparação
-- Geração de relatórios de auditoria.
-- Visualização de indicadores de segurança.
-- Comparação entre auditorias.
-- Acompanhamento das vulnerabilidades corrigidas e pendentes.
-
-## Tecnologias previstas
+## Tecnologias
 
 | Tecnologia | Utilização |
 |---|---|
 | Java 21 | Linguagem principal |
-| Spring Boot | Desenvolvimento da aplicação |
-| Spring Security | Autenticação e autorização |
+| JavaFX | Interface gráfica nativa da aplicação desktop |
 | Maven | Gestão do projeto e dependências |
-| PostgreSQL | Base de dados |
-| Spring Data JPA | Persistência de dados |
-| HTML, CSS e JavaScript | Interface web |
-| Thymeleaf | Integração da interface com Spring |
+| SQLite | Base de dados local da aplicação |
+| JDBC | Acesso à base de dados |
 | JUnit 5 | Testes |
 | Git e GitHub | Controlo de versões |
 
 ## Ferramentas de segurança previstas
 
-- **OWASP ZAP** — análise dinâmica de aplicações.
+- **OWASP ZAP** — análise dinâmica, em alvos próprios ou com autorização explícita.
 - **OWASP Dependency-Check** — identificação de dependências vulneráveis.
 - **SonarQube** — análise estática e qualidade do código.
 - **CWE** — classificação de vulnerabilidades.
-- **CVSS** — avaliação da gravidade técnica das vulnerabilidades.
+- **CVSS** — avaliação da gravidade técnica.
 
-A integração destas ferramentas será realizada progressivamente.
+A integração destas ferramentas será realizada progressivamente. As análises não serão executadas contra sistemas sem autorização.
 
-## Arquitetura prevista
+## Arquitetura
 
-O CyberAudit será inicialmente desenvolvido como uma aplicação web baseada numa arquitetura modular.
+O CyberAudit é uma aplicação desktop modular. A interface gráfica é construída com JavaFX; a lógica de negócio é organizada em módulos; e os dados da primeira versão são guardados numa base de dados SQLite local no computador do utilizador. A aplicação não necessita de navegador nem de servidor web para ser utilizada.
 
-Os principais componentes serão:
+## Estado atual
 
-- Interface web.
-- Sistema de autenticação e permissões.
-- Gestão de organizações e utilizadores.
-- Gestão de ativos.
-- Motor de auditorias.
-- Analisadores de segurança.
-- Gestão de vulnerabilidades e riscos.
-- Sistema de relatórios.
-- Base de dados.
+A primeira versão inclui uma janela JavaFX para consultar, adicionar e eliminar organizações. Os dados são persistidos localmente em `data/cyberaudit.db`. Os restantes módulos descritos neste README são objetivos a implementar progressivamente.
+
+## Executar em desenvolvimento
+
+Requisitos: **JDK 21** e **Maven**.
+
+```bash
+mvn clean javafx:run
+```
+
+Na primeira execução, a aplicação cria automaticamente a pasta `data` e a base de dados SQLite. O projeto está preparado para execução em ambiente gráfico; num sistema sem interface gráfica, a janela não poderá ser aberta.
 
 ## Plano de desenvolvimento
 
-O desenvolvimento será realizado por etapas:
-
-1. Preparação do ambiente de desenvolvimento.
-2. Criação da estrutura do projeto.
-3. Desenvolvimento da gestão de organizações e utilizadores.
-4. Implementação da base de dados.
-5. Desenvolvimento da gestão de ativos.
-6. Implementação da autenticação e permissões.
-7. Desenvolvimento do módulo de auditorias.
-8. Integração da análise estática (SAST).
-9. Integração da análise dinâmica (DAST).
-10. Implementação da gestão de vulnerabilidades e riscos.
-11. Desenvolvimento do dashboard e relatórios.
-12. Testes, documentação e preparação da apresentação da PAP.
+1. Preparar o ambiente e a estrutura da aplicação desktop.
+2. Implementar a gestão de organizações.
+3. Criar gestão de utilizadores, autenticação e permissões.
+4. Implementar gestão de ativos.
+5. Criar os módulos de auditoria e histórico.
+6. Integrar progressivamente análises SAST, DAST e de dependências.
+7. Implementar gestão de vulnerabilidades e riscos.
+8. Criar relatórios, testes e documentação.
+9. Preparar empacotamento para instalação nos sistemas operativos pretendidos.
 
 ## Segurança e utilização responsável
 
-As análises de segurança serão realizadas apenas em aplicações, sistemas e infraestruturas próprios ou para os quais exista autorização explícita.
-
-O projeto terá em consideração a proteção dos dados, o controlo de acessos, o isolamento entre organizações e a utilização responsável das ferramentas de auditoria.
-
-Os resultados automáticos poderão incluir falsos positivos e deverão ser analisados antes de serem considerados vulnerabilidades confirmadas.
-
-## Estado do projeto
-
-**Em fase de planeamento e preparação do desenvolvimento.**
-
-As funcionalidades descritas representam os objetivos previstos e serão implementadas progressivamente.
-
-## Objetivo final
-
-Criar uma plataforma de cibersegurança que permita às empresas tecnológicas centralizar auditorias, identificar vulnerabilidades, gerir riscos e acompanhar a evolução da segurança dos seus sistemas.
-
----
+As análises serão realizadas apenas em aplicações, sistemas e infraestruturas próprios ou para os quais exista autorização explícita. Os dados guardados localmente devem ser protegidos pelo utilizador do computador. Os resultados automáticos podem conter falsos positivos e devem ser revistos antes de serem tratados como vulnerabilidades confirmadas.
 
 **Projeto desenvolvido no âmbito da PAP 2027.**
-ins académicos. Licença a definir (por ex
